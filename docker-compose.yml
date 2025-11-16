@@ -30,7 +30,7 @@ services:
       PORT: 3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
     ports:
-      - "3000:3000"
+      - "9016:3000"
     restart: always
     command: >
       sh -c "
