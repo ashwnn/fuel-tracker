@@ -40,6 +40,14 @@ enum FuelType {
   OTHER
 }
 
+enum TransmissionType {
+  AUTOMATIC
+  MANUAL
+  CVT
+  DCT
+  OTHER
+}
+
 enum FillLevel {
   FULL
   PARTIAL
@@ -101,6 +109,8 @@ model Vehicle {
   make      String?
   model     String?
   year      Int?
+  transmissionType TransmissionType?
+  expectedMpg Decimal? @db.Decimal(8, 3)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 

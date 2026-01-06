@@ -17,6 +17,8 @@ export const createVehicleSchema = z.object({
   make: z.string().optional(),
   model: z.string().optional(),
   year: z.number().int().min(1900).max(new Date().getFullYear() + 1).optional(),
+  transmissionType: z.enum(["AUTOMATIC", "MANUAL", "CVT", "DCT", "OTHER"]).optional(),
+  expectedMpg: z.number().positive().optional(),
 });
 
 export const updateVehicleSchema = createVehicleSchema.partial();

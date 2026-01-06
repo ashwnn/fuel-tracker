@@ -34,7 +34,12 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    return NextResponse.json({ vehicles: vehiclesWithStats });
+    return NextResponse.json({
+      vehicles: vehiclesWithStats.map((v: any) => ({
+        ...v,
+        expectedMpg: v.expectedMpg ? Number(v.expectedMpg) : null,
+      })),
+    });
   } catch (error) {
     console.error('Get vehicles error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -69,7 +74,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ vehicle }, { status: 201 });
+    return NextResponse.json({ vehicle: { ...vehicle, expectedMpg: vehicle.expectedMpg ? Number(vehicle.expectedMpg) : null } }, { status: 201 });
   } catch (error) {
     console.error('Create vehicle error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

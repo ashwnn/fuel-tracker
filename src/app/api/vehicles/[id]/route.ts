@@ -35,7 +35,7 @@ export async function GET(
       return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ vehicle });
+    return NextResponse.json({ vehicle: { ...vehicle, expectedMpg: vehicle.expectedMpg ? Number(vehicle.expectedMpg) : null } });
   } catch (error) {
     console.error('Get vehicle error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -83,7 +83,7 @@ export async function PUT(
       include: { tanks: true },
     });
 
-    return NextResponse.json({ vehicle: updated });
+    return NextResponse.json({ vehicle: updated ? { ...updated, expectedMpg: updated.expectedMpg ? Number(updated.expectedMpg) : null } : null });
   } catch (error) {
     console.error('Update vehicle error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

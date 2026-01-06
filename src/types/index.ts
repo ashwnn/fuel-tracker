@@ -6,6 +6,7 @@ export type EconomyUnit = 'L_PER_100KM' | 'MPG';
 export type FuelType = 'REGULAR' | 'PREMIUM' | 'DIESEL' | 'E85' | 'OTHER';
 export type FillLevel = 'FULL' | 'PARTIAL';
 export type EntrySourceType = 'MANUAL' | 'PHOTO_AI' | 'API';
+export type TransmissionType = 'AUTOMATIC' | 'MANUAL' | 'CVT' | 'DCT' | 'OTHER';
 
 export interface User {
   id: number;
@@ -24,6 +25,8 @@ export interface Vehicle {
   make?: string;
   model?: string;
   year?: number;
+  transmissionType?: TransmissionType;
+  expectedMpg?: number;
   createdAt: string;
   updatedAt: string;
   tanks?: TankProfile[];
@@ -97,6 +100,7 @@ export interface VehicleStats {
   totalCost: number;
   totalDistanceKm: number;
   avgEconomyLPer100Km?: number;
+  avgEconomyMpg?: number;
   avgPricePerLiter?: number;
   entryCount: number;
 }

@@ -122,6 +122,11 @@ export async function calculateFuelStats(
     ? fullFills.reduce((sum, e) => sum + Number(e.economyLPer100Km), 0) / fullFills.length
     : null;
 
+  const mpgSamples = entries.filter(e => e.fillLevel === 'FULL' && e.economyMpg !== null);
+  const avgEconomyMpg = mpgSamples.length > 0
+    ? mpgSamples.reduce((sum, e) => sum + Number(e.economyMpg), 0) / mpgSamples.length
+    : null;
+
   const avgPricePerLiter = totalFuelL > 0 ? totalCost / totalFuelL : null;
 
   return {
@@ -129,6 +134,7 @@ export async function calculateFuelStats(
     totalCost,
     totalDistanceKm,
     avgEconomyLPer100Km,
+    avgEconomyMpg,
     avgPricePerLiter,
     entryCount: entries.length,
   };

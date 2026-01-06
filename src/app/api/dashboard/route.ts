@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
               fuelVolumeL: true,
               totalCost: true,
               economyLPer100Km: true,
+              economyMpg: true,
             },
           },
           tanks: true,
@@ -71,19 +72,26 @@ export async function GET(request: NextRequest) {
       const vehicleEntries = entries.filter((e: any) => e.vehicleId === vehicle.id);
       const totalFuelL = vehicleEntries.reduce((sum: number, e: any) => sum + Number(e.fuelVolumeL || 0), 0);
       const totalCost = vehicleEntries.reduce((sum: number, e: any) => sum + Number(e.totalCost || 0), 0);
-      const avgEconomyLPer100Km =
-        vehicleEntries.length > 0
-          ? vehicleEntries.reduce((sum: number, e: any) => sum + Number(e.economyLPer100Km || 0), 0) /
-            vehicleEntries.filter((e: any) => e.economyLPer100Km).length
-          : null;
+
+      const economySamples = vehicleEntries.filter((e: any) => e.economyLPer100Km);
+      const avgEconomyLPer100Km = economySamples.length > 0
+        ? economySamples.reduce((sum: number, e: any) => sum + Number(e.economyLPer100Km || 0), 0) / economySamples.length
+        : null;
+
+      const mpgSamples = vehicleEntries.filter((e: any) => e.economyMpg);
+      const avgEconomyMpg = mpgSamples.length > 0
+        ? mpgSamples.reduce((sum: number, e: any) => sum + Number(e.economyMpg || 0), 0) / mpgSamples.length
+        : null;
 
       return {
         ...vehicle,
+        expectedMpg: vehicle.expectedMpg ? Number(vehicle.expectedMpg) : null,
         stats: {
           entryCount: vehicleEntries.length,
           totalFuelL,
           totalCost,
           avgEconomyLPer100Km: avgEconomyLPer100Km || null,
+          avgEconomyMpg: avgEconomyMpg || null,
         },
       };
     });
@@ -117,11 +125,33 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Fleet-wide MPG health vs expected
+    const fleetMpgSamples = entries.filter((e: any) => e.economyMpg);
+    const fleetAvgMpg = fleetMpgSamples.length > 0
+      ? fleetMpgSamples.reduce((sum: number, e: any) => sum + Number(e.economyMpg || 0), 0) / fleetMpgSamples.length
+      : null;
+
+    const expectedValues = vehiclesWithStats
+      .filter((v: any) => v.expectedMpg)
+      .map((v: any) => Number(v.expectedMpg));
+    const expectedAvgMpg = expectedValues.length > 0
+      ? expectedValues.reduce((sum: number, val: number) => sum + val, 0) / expectedValues.length
+      : null;
+
+    const healthScore = fleetAvgMpg && expectedAvgMpg
+      ? Math.max(0, Math.min(120, (fleetAvgMpg / expectedAvgMpg) * 100))
+      : null;
+
     // Cache for 5 minutes to reduce database load
     const response = NextResponse.json({
       vehicles: vehiclesWithStats,
       budgetUsage,
       lastEntries,
+      fleetHealth: {
+        fleetAvgMpg,
+        expectedAvgMpg,
+        healthScore,
+      },
     });
 
     response.headers.set('Cache-Control', 'private, max-age=300, s-maxage=300');

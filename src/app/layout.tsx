@@ -38,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={fontSans.variable} suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="safe-top min-h-screen bg-background text-foreground antialiased">
         <OfflineBanner />
         <AuthProvider>{children}</AuthProvider>
         <ServiceWorkerRegister />

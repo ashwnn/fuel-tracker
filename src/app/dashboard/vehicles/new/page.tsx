@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
@@ -28,6 +29,8 @@ function VehicleForm() {
     make: '',
     model: '',
     year: new Date().getFullYear(),
+    transmissionType: '',
+    expectedMpg: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +48,8 @@ function VehicleForm() {
       if (formData.make) payload.make = formData.make;
       if (formData.model) payload.model = formData.model;
       if (formData.year) payload.year = formData.year;
+      if (formData.transmissionType) payload.transmissionType = formData.transmissionType;
+      if (formData.expectedMpg) payload.expectedMpg = parseFloat(formData.expectedMpg as any);
 
       await api.vehicles.create(payload, token);
       router.push('/dashboard/vehicles');
@@ -105,16 +110,47 @@ function VehicleForm() {
             </div>
           </div>
 
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="year">Year</Label>
+              <Input
+                id="year"
+                type="number"
+                value={formData.year}
+                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                min="1900"
+                max={new Date().getFullYear() + 1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="transmission">Transmission</Label>
+              <Select
+                id="transmission"
+                value={formData.transmissionType}
+                onChange={(e) => setFormData({ ...formData, transmissionType: e.target.value })}
+              >
+                <option value="">Select</option>
+                <option value="AUTOMATIC">Automatic</option>
+                <option value="MANUAL">Manual</option>
+                <option value="CVT">CVT</option>
+                <option value="DCT">DCT</option>
+                <option value="OTHER">Other</option>
+              </Select>
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="year">Year</Label>
+            <Label htmlFor="expectedMpg">Expected MPG (manufacturer)</Label>
             <Input
-              id="year"
+              id="expectedMpg"
               type="number"
-              value={formData.year}
-              onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-              min="1900"
-              max={new Date().getFullYear() + 1}
+              step="0.1"
+              value={formData.expectedMpg}
+              onChange={(e) => setFormData({ ...formData, expectedMpg: e.target.value })}
+              placeholder="32"
             />
+            <p className="text-xs text-muted-foreground">Used to gauge health vs rated efficiency.</p>
           </div>
 
           <div className="flex flex-wrap gap-2">

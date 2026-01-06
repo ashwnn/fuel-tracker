@@ -34,6 +34,16 @@ function normalizeVehicle(vehicle: any) {
   if (vehicle && Array.isArray(vehicle.entries)) {
     vehicle.entries = vehicle.entries.map(normalizeEntry);
   }
+  if (vehicle?.expectedMpg != null) {
+    vehicle.expectedMpg = Number(vehicle.expectedMpg);
+  }
+  if (vehicle?.stats) {
+    if (vehicle.stats.avgEconomyLPer100Km != null) vehicle.stats.avgEconomyLPer100Km = Number(vehicle.stats.avgEconomyLPer100Km);
+    if (vehicle.stats.avgEconomyMpg != null) vehicle.stats.avgEconomyMpg = Number(vehicle.stats.avgEconomyMpg);
+    if (vehicle.stats.totalFuelL != null) vehicle.stats.totalFuelL = Number(vehicle.stats.totalFuelL);
+    if (vehicle.stats.totalCost != null) vehicle.stats.totalCost = Number(vehicle.stats.totalCost);
+    if (vehicle.stats.totalDistanceKm != null) vehicle.stats.totalDistanceKm = Number(vehicle.stats.totalDistanceKm);
+  }
   return vehicle;
 }
 
