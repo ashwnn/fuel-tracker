@@ -125,6 +125,8 @@ function PhotoForm() {
         currency: formData.currency,
         fuelType: formData.fuelType,
         fillLevel: 'FULL',
+        sourceType: prefilledData ? 'PHOTO_AI' : 'MANUAL',
+        aiConfidence: prefilledData ? Number(prefilledData.aiConfidence || 0) : undefined,
       };
 
       await api.entries.create(selectedVehicleId, payload, token);

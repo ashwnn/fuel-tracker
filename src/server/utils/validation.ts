@@ -42,7 +42,7 @@ export const createEntrySchema = z.object({
   fillLevel: z.enum(["FULL", "PARTIAL"]).default("FULL"),
   sourceType: z.enum(["MANUAL", "PHOTO_AI", "API"]).default("MANUAL"),
   imageUrl: z.string().url().optional().or(z.literal("")),
-  aiConfidence: z.number().min(0).max(1).optional(),
+  aiConfidence: z.number().min(0).max(100).optional(),
   location: z.string().optional(),
   notes: z.string().optional(),
 });

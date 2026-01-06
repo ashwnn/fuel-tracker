@@ -1,6 +1,9 @@
 // API client helper functions
 
-const API_BASE = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const API_BASE =
+  typeof window === 'undefined'
+    ? process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    : '';
 
 interface FetchOptions extends RequestInit {
   token?: string;
