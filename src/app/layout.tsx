@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 export const metadata: Metadata = {
   title: "FuelTracker - Track Your Fuel Expenses",
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={fontSans.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
+        <OfflineBanner />
         <AuthProvider>{children}</AuthProvider>
         <ServiceWorkerRegister />
       </body>

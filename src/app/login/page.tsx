@@ -40,17 +40,11 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     
-    console.log('[LOGIN PAGE] Form submitted with email:', email);
-
     try {
-      console.log('[LOGIN PAGE] Calling login...');
       await login(email, password);
-      console.log('[LOGIN PAGE] Login successful, redirecting...');
       router.push('/dashboard');
     } catch (err: any) {
       const message = err.message || 'Login failed';
-      console.error('[LOGIN PAGE] Login error:', err);
-      console.error('[LOGIN PAGE] Error message:', message);
       setError(message);
     } finally {
       setLoading(false);
