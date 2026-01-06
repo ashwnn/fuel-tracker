@@ -20,6 +20,10 @@ RUN npx prisma generate
 # Copy source code
 COPY . .
 
+# Add entrypoint script to run migrations before app start
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
+
 # Build Next.js app
 RUN npm run build
 
@@ -29,5 +33,5 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-# Start the app (migrations will be run by docker-compose command)
-CMD ["npm", "start"]
+# Start the app (entrypoint runs migrations first)
+CMD ["./docker-entrypoint.sh"]

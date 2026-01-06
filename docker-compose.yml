@@ -37,29 +37,7 @@ services:
       - "9016:3000"
     restart: always
     networks:
-      - apps
-    command: >
-      sh -c "
-        echo '==================================='
-        echo 'FuelTracker is starting...'
-        echo '==================================='
-        echo ''
-        echo 'Database Connection:'
-        echo '  Host: db:3306'
-        echo '  Database: fueltrack'
-        echo '  User: appuser'
-        echo '  Internal URL: mysql://appuser:app_password@db:3306/fueltrack'
-        echo ''
-        echo 'Running database migrations...'
-        npx prisma migrate deploy &&
-        echo ''
-        echo '==================================='
-        echo 'Application URL: http://localhost:3000'
-        echo '==================================='
-        echo ''
-        echo 'Starting Next.js application...'
-        npm start
-      "      
+      - apps      
 
 networks:
   apps:
