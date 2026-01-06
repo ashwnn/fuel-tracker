@@ -14,6 +14,13 @@ const STATIC_ASSETS = [
   '/manifest.webmanifest',
 ];
 
+// Allow clients to tell this worker to activate immediately
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Cache expiration timestamps stored in IndexedDB
 let cacheTimestamps = {};
 
