@@ -2,6 +2,8 @@
 
 A comprehensive multi-user PWA for tracking fuel expenses across multiple vehicles with AI-powered receipt scanning.
 
+> Disclaimer: This application was developed entirely through automated AI agent's based on a design schema I created.
+
 ## Features
 
 - 📱 **Progressive Web App** - Install on any device, works offline
