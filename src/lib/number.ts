@@ -10,7 +10,7 @@ export function toNumber(value: any): number | null {
     const trimmed = value.trim();
     if (trimmed === '') return null;
     const n = Number(trimmed);
-    return isNaN(n) ? null : n;
+    return Number.isFinite(n) ? n : null;
   }
   if (typeof value === 'object') {
     // Decimal.js or prisma Decimal may have toNumber/toString
@@ -23,7 +23,7 @@ export function toNumber(value: any): number | null {
     }
     if (typeof value.toString === 'function') {
       const n = Number(value.toString());
-      return isNaN(n) ? null : n;
+      return Number.isFinite(n) ? n : null;
     }
   }
   return null;
@@ -31,6 +31,6 @@ export function toNumber(value: any): number | null {
 
 export function formatNumber(value: any, decimals = 2, fallback = '-') {
   const n = toNumber(value);
-  if (n == null) return fallback;
+  if (n == null || !Number.isFinite(n)) return fallback;
   return n.toFixed(decimals);
 }

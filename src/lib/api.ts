@@ -1,3 +1,5 @@
+import { toNumber } from './number';
+
 // API client helper functions
 
 const API_BASE =
@@ -13,17 +15,28 @@ interface FetchOptions extends RequestInit {
  * Normalize a single entry by converting numeric string fields to numbers.
  * This consolidates the duplicate normalization logic that was scattered throughout the code.
  */
+function coerceNumber(value: any, field: string) {
+  const parsed = toNumber(value);
+  if (parsed == null) {
+    if (value != null) {
+      console.warn(`[api] Skipping invalid numeric value for ${field}`, value);
+    }
+    return null;
+  }
+  return parsed;
+}
+
 function normalizeEntry(entry: any) {
   return {
     ...entry,
-    odometerKm: entry.odometerKm == null ? entry.odometerKm : Number(entry.odometerKm),
-    fuelVolumeL: entry.fuelVolumeL == null ? entry.fuelVolumeL : Number(entry.fuelVolumeL),
-    totalCost: entry.totalCost == null ? entry.totalCost : Number(entry.totalCost),
-    pricePerLiter: entry.pricePerLiter == null ? null : Number(entry.pricePerLiter),
-    distanceSinceLastKm: entry.distanceSinceLastKm == null ? null : Number(entry.distanceSinceLastKm),
-    economyLPer100Km: entry.economyLPer100Km == null ? null : Number(entry.economyLPer100Km),
-    economyMpg: entry.economyMpg == null ? null : Number(entry.economyMpg),
-    costPerKm: entry.costPerKm == null ? null : Number(entry.costPerKm),
+    odometerKm: coerceNumber(entry.odometerKm, 'entry.odometerKm'),
+    fuelVolumeL: coerceNumber(entry.fuelVolumeL, 'entry.fuelVolumeL'),
+    totalCost: coerceNumber(entry.totalCost, 'entry.totalCost'),
+    pricePerLiter: coerceNumber(entry.pricePerLiter, 'entry.pricePerLiter'),
+    distanceSinceLastKm: coerceNumber(entry.distanceSinceLastKm, 'entry.distanceSinceLastKm'),
+    economyLPer100Km: coerceNumber(entry.economyLPer100Km, 'entry.economyLPer100Km'),
+    economyMpg: coerceNumber(entry.economyMpg, 'entry.economyMpg'),
+    costPerKm: coerceNumber(entry.costPerKm, 'entry.costPerKm'),
   };
 }
 
@@ -35,14 +48,14 @@ function normalizeVehicle(vehicle: any) {
     vehicle.entries = vehicle.entries.map(normalizeEntry);
   }
   if (vehicle?.expectedMpg != null) {
-    vehicle.expectedMpg = Number(vehicle.expectedMpg);
+    vehicle.expectedMpg = coerceNumber(vehicle.expectedMpg, 'vehicle.expectedMpg');
   }
   if (vehicle?.stats) {
-    if (vehicle.stats.avgEconomyLPer100Km != null) vehicle.stats.avgEconomyLPer100Km = Number(vehicle.stats.avgEconomyLPer100Km);
-    if (vehicle.stats.avgEconomyMpg != null) vehicle.stats.avgEconomyMpg = Number(vehicle.stats.avgEconomyMpg);
-    if (vehicle.stats.totalFuelL != null) vehicle.stats.totalFuelL = Number(vehicle.stats.totalFuelL);
-    if (vehicle.stats.totalCost != null) vehicle.stats.totalCost = Number(vehicle.stats.totalCost);
-    if (vehicle.stats.totalDistanceKm != null) vehicle.stats.totalDistanceKm = Number(vehicle.stats.totalDistanceKm);
+    if (vehicle.stats.avgEconomyLPer100Km != null) vehicle.stats.avgEconomyLPer100Km = coerceNumber(vehicle.stats.avgEconomyLPer100Km, 'vehicle.stats.avgEconomyLPer100Km');
+    if (vehicle.stats.avgEconomyMpg != null) vehicle.stats.avgEconomyMpg = coerceNumber(vehicle.stats.avgEconomyMpg, 'vehicle.stats.avgEconomyMpg');
+    if (vehicle.stats.totalFuelL != null) vehicle.stats.totalFuelL = coerceNumber(vehicle.stats.totalFuelL, 'vehicle.stats.totalFuelL');
+    if (vehicle.stats.totalCost != null) vehicle.stats.totalCost = coerceNumber(vehicle.stats.totalCost, 'vehicle.stats.totalCost');
+    if (vehicle.stats.totalDistanceKm != null) vehicle.stats.totalDistanceKm = coerceNumber(vehicle.stats.totalDistanceKm, 'vehicle.stats.totalDistanceKm');
   }
   return vehicle;
 }
@@ -67,12 +80,22 @@ async function apiFetch<T>(
     credentials: 'include', // Include cookies
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || 'Request failed');
+  let result: any = null;
+  try {
+    result = await response.json();
+  } catch (parseError) {
+    console.error('Failed to parse response body', parseError);
   }
 
-  const result = await response.json();
+  if (!response.ok) {
+    const message = result?.error || `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+
+  if (result == null) {
+    throw new Error('Invalid server response');
+  }
+
   return result;
 }
 

@@ -17,6 +17,10 @@ export async function DELETE(
     const vehicleId = parseInt(id);
     const entryIdNum = parseInt(entryId);
 
+    if (Number.isNaN(vehicleId) || Number.isNaN(entryIdNum)) {
+      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+    }
+
     // Verify vehicle ownership
     const vehicle = await prisma.vehicle.findFirst({
       where: { id: vehicleId, userId: user.id },

@@ -17,6 +17,10 @@ export async function GET(
     const { id } = await params;
     const vehicleId = parseInt(id);
 
+    if (Number.isNaN(vehicleId)) {
+      return NextResponse.json({ error: 'Invalid vehicle id' }, { status: 400 });
+    }
+
     const vehicle = await prisma.vehicle.findFirst({
       where: {
         id: vehicleId,
@@ -55,6 +59,10 @@ export async function PUT(
 
     const { id } = await params;
     const vehicleId = parseInt(id);
+
+    if (Number.isNaN(vehicleId)) {
+      return NextResponse.json({ error: 'Invalid vehicle id' }, { status: 400 });
+    }
 
     const body = await req.json();
     const parsed = updateVehicleSchema.safeParse(body);
@@ -103,6 +111,10 @@ export async function DELETE(
 
     const { id } = await params;
     const vehicleId = parseInt(id);
+
+    if (Number.isNaN(vehicleId)) {
+      return NextResponse.json({ error: 'Invalid vehicle id' }, { status: 400 });
+    }
 
     const result = await prisma.vehicle.deleteMany({
       where: {

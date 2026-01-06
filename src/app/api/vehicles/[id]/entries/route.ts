@@ -18,6 +18,10 @@ export async function GET(
     const { id } = await params;
     const vehicleId = parseInt(id);
 
+    if (Number.isNaN(vehicleId)) {
+      return NextResponse.json({ error: 'Invalid vehicle id' }, { status: 400 });
+    }
+
     // Verify vehicle ownership
     const vehicle = await prisma.vehicle.findFirst({
       where: { id: vehicleId, userId: user.id },
@@ -92,6 +96,11 @@ export async function POST(
     const { id } = await params;
     const vehicleId = parseInt(id);
     console.log('[ENTRY CREATE] Vehicle ID:', vehicleId);
+
+    if (Number.isNaN(vehicleId)) {
+      console.log('[ENTRY CREATE] Invalid vehicle id');
+      return NextResponse.json({ error: 'Invalid vehicle id' }, { status: 400 });
+    }
 
     // Verify vehicle ownership
     const vehicle = await prisma.vehicle.findFirst({
@@ -184,9 +193,13 @@ export async function POST(
     console.error('[ENTRY CREATE] ERROR:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('[ENTRY CREATE] Error message:', errorMessage);
+    const isClientError =
+      typeof errorMessage === 'string' &&
+      (errorMessage.toLowerCase().includes('invalid') || errorMessage.toLowerCase().includes('must be'));
+
     return NextResponse.json({ 
-      error: 'Internal server error',
+      error: isClientError ? errorMessage : 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
-    }, { status: 500 });
+    }, { status: isClientError ? 400 : 500 });
   }
 }

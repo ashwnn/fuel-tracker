@@ -1,7 +1,13 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../prisma';
 import { toKm, toLiters, mpgFromMetric, calculateLPer100Km } from '../utils/conversions';
-import { CreateEntryInput } from '../utils/validation';
+
+function assertFiniteNumber(value: number, field: string) {
+  if (!Number.isFinite(value)) {
+    throw new Error(`Invalid numeric value for ${field}`);
+  }
+  return value;
+}
 
 /**
  * Calculate derived fields for a fill-up entry
@@ -30,6 +36,14 @@ export async function calculateDerivedFields(
   const odometerKm = input.odometerKm ?? toKm(input.odometer, input.odometerUnit);
   const fuelVolumeL = input.fuelVolumeL ?? toLiters(input.fuelVolume, input.fuelUnit);
   const totalCost = input.totalCost;
+
+  assertFiniteNumber(odometerKm, 'odometerKm');
+  assertFiniteNumber(fuelVolumeL, 'fuelVolumeL');
+  assertFiniteNumber(totalCost, 'totalCost');
+
+  if (fuelVolumeL <= 0 || totalCost <= 0) {
+    throw new Error('Fuel volume and total cost must be greater than zero');
+  }
 
   // Calculate price per liter
   const pricePerLiter = fuelVolumeL > 0 ? totalCost / fuelVolumeL : null;
@@ -97,7 +111,25 @@ export async function calculateFuelStats(
     orderBy: { entryDate: 'asc' },
   });
 
-  if (entries.length === 0) {
+  const safeEntries = entries.filter((e) => {
+    const odometer = Number(e.odometerKm);
+    const fuel = Number(e.fuelVolumeL);
+    const cost = Number(e.totalCost);
+    const valid = Number.isFinite(odometer) && Number.isFinite(fuel) && Number.isFinite(cost);
+    if (!valid) {
+      console.warn('[fuel-stats] Skipping entry with invalid numeric fields', {
+        entryId: e.id,
+        vehicleId,
+        fuelType,
+        odometer: e.odometerKm,
+        fuelVolumeL: e.fuelVolumeL,
+        totalCost: e.totalCost,
+      });
+    }
+    return valid;
+  });
+
+  if (safeEntries.length === 0) {
     return {
       totalFuelL: 0,
       totalCost: 0,
@@ -108,21 +140,21 @@ export async function calculateFuelStats(
     };
   }
 
-  const totalFuelL = entries.reduce((sum, e) => sum + Number(e.fuelVolumeL), 0);
-  const totalCost = entries.reduce((sum, e) => sum + Number(e.totalCost), 0);
+  const totalFuelL = safeEntries.reduce((sum, e) => sum + Number(e.fuelVolumeL), 0);
+  const totalCost = safeEntries.reduce((sum, e) => sum + Number(e.totalCost), 0);
   
   // Calculate total distance (difference between first and last odometer)
-  const totalDistanceKm = entries.length > 1
-    ? Number(entries[entries.length - 1].odometerKm) - Number(entries[0].odometerKm)
+  const totalDistanceKm = safeEntries.length > 1
+    ? Number(safeEntries[safeEntries.length - 1].odometerKm) - Number(safeEntries[0].odometerKm)
     : 0;
 
   // Calculate average economy from full fills only
-  const fullFills = entries.filter(e => e.fillLevel === 'FULL' && e.economyLPer100Km !== null);
+  const fullFills = safeEntries.filter(e => e.fillLevel === 'FULL' && e.economyLPer100Km !== null);
   const avgEconomyLPer100Km = fullFills.length > 0
     ? fullFills.reduce((sum, e) => sum + Number(e.economyLPer100Km), 0) / fullFills.length
     : null;
 
-  const mpgSamples = entries.filter(e => e.fillLevel === 'FULL' && e.economyMpg !== null);
+  const mpgSamples = safeEntries.filter(e => e.fillLevel === 'FULL' && e.economyMpg !== null);
   const avgEconomyMpg = mpgSamples.length > 0
     ? mpgSamples.reduce((sum, e) => sum + Number(e.economyMpg), 0) / mpgSamples.length
     : null;
@@ -136,6 +168,6 @@ export async function calculateFuelStats(
     avgEconomyLPer100Km,
     avgEconomyMpg,
     avgPricePerLiter,
-    entryCount: entries.length,
+    entryCount: safeEntries.length,
   };
 }
