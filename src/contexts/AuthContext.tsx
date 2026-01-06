@@ -20,24 +20,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for stored token on mount
-    const storedToken = localStorage.getItem('auth-token');
-    if (storedToken) {
-      api.auth.me(storedToken)
-        .then(({ user }) => {
-          setUser(user);
-          setToken(storedToken);
-        })
-        .catch(() => {
-          localStorage.removeItem('auth-token');
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
+  const loadStoredSession = async () => {
+    const raw = localStorage.getItem('auth-token');
+    if (!raw) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as { token?: string; expiresAt?: number };
+      const storedToken = parsed.token;
+      const expiresAt = parsed.expiresAt ?? 0;
+
+      // If the token is missing or expired, clear it and bail
+      if (!storedToken || Date.now() > expiresAt) {
+        localStorage.removeItem('auth-token');
+        setLoading(false);
+        return;
+      }
+
+      const { user } = await api.auth.me(storedToken);
+      setUser(user);
+      setToken(storedToken);
+    } catch (error) {
+      // Legacy plain-token format or corrupted data; clear to enforce fresh login
+      localStorage.removeItem('auth-token');
+    } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadStoredSession();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -45,7 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await api.auth.login(email, password);
       setUser(response.user);
       setToken(response.token);
-      localStorage.setItem('auth-token', response.token);
+      const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
+      localStorage.setItem('auth-token', JSON.stringify({ token: response.token, expiresAt }));
     } catch (err) {
       throw err;
     }
