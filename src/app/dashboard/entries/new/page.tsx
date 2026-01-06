@@ -1,12 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
-import { Vehicle, TankProfile } from '@/types';
-import { formatNumber } from '@/lib/number';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { formatNumber } from "@/lib/number";
+import { TankProfile, Vehicle } from "@/types";
 
 export default function NewEntryPage() {
   return (
@@ -105,9 +111,12 @@ function EntryForm() {
 
   if (vehicles.length === 0) {
     return (
-      <div className="empty-state">
-        <p>Please add a vehicle first.</p>
-      </div>
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>Add fill-up</CardTitle>
+          <CardDescription>Please add a vehicle first.</CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
@@ -116,51 +125,59 @@ function EntryForm() {
     : '0.000';
 
   return (
-    <div className="form-page">
-      <div className="form-container">
-        <h1>Add Fill-Up Entry (Manual)</h1>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="vehicleId">Vehicle *</label>
-            <select
-              id="vehicleId"
-              value={formData.vehicleId}
-              onChange={(e) => setFormData({ ...formData, vehicleId: parseInt(e.target.value) })}
-              required
-            >
-              {vehicles.map(vehicle => (
-                <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.name}
-                </option>
-              ))}
-            </select>
+    <Card className="shadow-sm">
+      <CardHeader>
+        <CardTitle>Add fill-up</CardTitle>
+        <CardDescription>Manual entry with quick calculations.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
           </div>
+        )}
 
-          {tanks.length > 0 && (
-            <div className="form-group">
-              <label htmlFor="tankProfileId">Tank (Optional)</label>
-              <select
-                id="tankProfileId"
-                value={formData.tankProfileId || ''}
-                onChange={(e) => setFormData({ ...formData, tankProfileId: e.target.value ? parseInt(e.target.value) : undefined })}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="vehicleId">Vehicle</Label>
+              <Select
+                id="vehicleId"
+                value={formData.vehicleId}
+                onChange={(e) => setFormData({ ...formData, vehicleId: parseInt(e.target.value) })}
+                required
               >
-                <option value="">No specific tank</option>
-                {tanks.map(tank => (
-                  <option key={tank.id} value={tank.id}>
-                    {tank.name} ({tank.capacityL}L)
+                {vehicles.map(vehicle => (
+                  <option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
-          )}
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="entryDate">Date *</label>
-              <input
+            {tanks.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="tankProfileId">Tank (optional)</Label>
+                <Select
+                  id="tankProfileId"
+                  value={formData.tankProfileId || ''}
+                  onChange={(e) => setFormData({ ...formData, tankProfileId: e.target.value ? parseInt(e.target.value) : undefined })}
+                >
+                  <option value="">No specific tank</option>
+                  {tanks.map(tank => (
+                    <option key={tank.id} value={tank.id}>
+                      {tank.name} ({tank.capacityL}L)
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="entryDate">Date</Label>
+              <Input
                 id="entryDate"
                 type="date"
                 value={formData.entryDate}
@@ -169,9 +186,9 @@ function EntryForm() {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="odometerKm">Odometer (km) *</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="odometerKm">Odometer (km)</Label>
+              <Input
                 id="odometerKm"
                 type="number"
                 step="0.1"
@@ -183,10 +200,10 @@ function EntryForm() {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="fuelVolumeL">Volume (L) *</label>
-              <input
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="fuelVolumeL">Volume (L)</Label>
+              <Input
                 id="fuelVolumeL"
                 type="number"
                 step="0.01"
@@ -197,9 +214,9 @@ function EntryForm() {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="totalCost">Total Cost *</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="totalCost">Total cost</Label>
+              <Input
                 id="totalCost"
                 type="number"
                 step="0.01"
@@ -208,17 +225,14 @@ function EntryForm() {
                 placeholder="65.75"
                 required
               />
+              <p className="text-xs text-muted-foreground">Price per liter: ${pricePerLiter}</p>
             </div>
           </div>
 
-          <div className="calculation-display">
-            <strong>Price per Liter:</strong> ${pricePerLiter}
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="currency">Currency *</label>
-              <select
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <Select
                 id="currency"
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
@@ -228,12 +242,12 @@ function EntryForm() {
                 <option value="EUR">EUR</option>
                 <option value="GBP">GBP</option>
                 <option value="CAD">CAD</option>
-              </select>
+              </Select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="fuelType">Fuel Type *</label>
-              <select
+            <div className="space-y-2">
+              <Label htmlFor="fuelType">Fuel type</Label>
+              <Select
                 id="fuelType"
                 value={formData.fuelType}
                 onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
@@ -242,12 +256,12 @@ function EntryForm() {
                 <option value="GASOLINE">Gasoline</option>
                 <option value="DIESEL">Diesel</option>
                 <option value="ELECTRIC">Electric</option>
-              </select>
+              </Select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="fillLevel">Fill Level *</label>
-              <select
+            <div className="space-y-2">
+              <Label htmlFor="fillLevel">Fill level</Label>
+              <Select
                 id="fillLevel"
                 value={formData.fillLevel}
                 onChange={(e) => setFormData({ ...formData, fillLevel: e.target.value as any })}
@@ -255,13 +269,13 @@ function EntryForm() {
               >
                 <option value="FULL">Full</option>
                 <option value="PARTIAL">Partial</option>
-              </select>
+              </Select>
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="location">Location</label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input
               id="location"
               type="text"
               value={formData.location}
@@ -270,9 +284,9 @@ function EntryForm() {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="notes">Notes</label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -281,21 +295,16 @@ function EntryForm() {
             />
           </div>
 
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Entry'}
-            </button>
-            <button 
-              type="button" 
-              className="btn-secondary" 
-              onClick={() => router.back()}
-              disabled={loading}
-            >
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving…' : 'Save entry'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => router.back()} disabled={loading}>
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

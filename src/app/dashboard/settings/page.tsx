@@ -1,11 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
-import { MonthlyBudget } from '@/types';
-import { formatNumber } from '@/lib/number';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { formatNumber } from "@/lib/number";
+import type { MonthlyBudget } from "@/types";
 
 export default function SettingsPage() {
   return (
@@ -20,35 +28,38 @@ function SettingsContent() {
   const [activeTab, setActiveTab] = useState<'budgets' | 'apikeys' | 'export'>('budgets');
 
   return (
-    <div className="settings-page">
-      <h1>Settings</h1>
-      
-      <div className="settings-tabs">
-        <button 
-          className={activeTab === 'budgets' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('budgets')}
-        >
-          Budgets
-        </button>
-        <button 
-          className={activeTab === 'apikeys' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('apikeys')}
-        >
-          API Keys
-        </button>
-        <button 
-          className={activeTab === 'export' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('export')}
-        >
-          Export Data
-        </button>
+    <div className="space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Settings</h1>
+          <p className="text-sm text-muted-foreground">Control budgets, API keys, and exports.</p>
+        </div>
+        <Badge variant="outline" className="hidden sm:inline-flex">{user?.email}</Badge>
       </div>
 
-      <div className="settings-content">
-        {activeTab === 'budgets' && <BudgetSettings token={token} />}
-        {activeTab === 'apikeys' && <ApiKeySettings token={token} />}
-        {activeTab === 'export' && <ExportSettings token={token} />}
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="budgets">Budgets</TabsTrigger>
+              <TabsTrigger value="apikeys">API Keys</TabsTrigger>
+              <TabsTrigger value="export">Export</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="budgets" className="mt-6">
+              <BudgetSettings token={token} />
+            </TabsContent>
+
+            <TabsContent value="apikeys" className="mt-6">
+              <ApiKeySettings token={token} />
+            </TabsContent>
+
+            <TabsContent value="export" className="mt-6">
+              <ExportSettings token={token} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -124,83 +135,78 @@ function BudgetSettings({ token }: { token: string | null }) {
   };
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2>Monthly Budget</h2>
-        {budget ? (
-          <button 
-            className="btn-secondary" 
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? 'Cancel' : '✏️ Edit Budget'}
-          </button>
-        ) : (
-          <button 
-            className="btn-primary" 
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? 'Cancel' : '➕ Set Budget'}
-          </button>
-        )}
-      </div>
-
-      {error && <div className="error-message">{error}</div>}
-
-      {budget && !showForm && (
-        <div className="budget-display">
-          <p className="budget-info">
-            Your monthly budget is set to <strong>{budget.currency} ${formatNumber(budget.amount, 2)}</strong> every month.
-          </p>
-          <p className="budget-note">
-            This budget applies to all months. You can track your spending against this budget on the dashboard.
-          </p>
-          <button onClick={handleDelete} className="btn-danger" disabled={loading}>
-            Delete Budget
-          </button>
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>Monthly budget</CardTitle>
+          <CardDescription>Set a monthly cap to keep spending on track.</CardDescription>
         </div>
-      )}
+        <Button variant={budget ? "secondary" : "default"} onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Cancel' : budget ? 'Edit budget' : 'Set budget'}
+        </Button>
+      </CardHeader>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="budget-form">
-          <div className="form-group">
-            <label htmlFor="amount">Monthly Budget Amount</label>
-            <input
-              id="amount"
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              placeholder="500.00"
-              required
-            />
-            <p className="form-help">This amount will be your budget for every month.</p>
+      <CardContent className="space-y-4">
+        {error && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="currency">Currency</label>
-            <select
-              id="currency"
-              value={formData.currency}
-              onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-              required
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="CAD">CAD</option>
-            </select>
+        )}
+
+        {budget && !showForm && (
+          <div className="space-y-2 rounded-lg border bg-muted/40 p-4">
+            <p className="text-sm text-muted-foreground">
+              Your monthly budget is set to <span className="font-semibold text-foreground">{budget.currency} ${formatNumber(budget.amount, 2)}</span> every month.
+            </p>
+            <p className="text-xs text-muted-foreground">This applies to all months. Track usage on the dashboard.</p>
+            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={handleDelete} disabled={loading}>
+              Delete budget
+            </Button>
           </div>
+        )}
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Saving...' : budget ? 'Update Budget' : 'Set Budget'}
-          </button>
-        </form>
-      )}
+        {showForm && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">Monthly budget amount</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="500.00"
+                required
+              />
+              <p className="text-xs text-muted-foreground">This amount applies to every month.</p>
+            </div>
 
-      {!budget && !showForm && (
-        <p>No monthly budget set. Set a budget to track your fuel spending each month.</p>
-      )}
-    </div>
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <Select
+                id="currency"
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                required
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="CAD">CAD</option>
+              </Select>
+            </div>
+
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              {loading ? 'Saving…' : budget ? 'Update budget' : 'Set budget'}
+            </Button>
+          </form>
+        )}
+
+        {!budget && !showForm && (
+          <p className="text-sm text-muted-foreground">No monthly budget set. Set a budget to track your fuel spending.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -260,93 +266,99 @@ function ApiKeySettings({ token }: { token: string | null }) {
   };
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2>API Keys</h2>
-        <button 
-          className="btn-primary" 
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? 'Cancel' : '➕ Generate Key'}
-        </button>
-      </div>
-
-      {error && <div className="error-message">{error}</div>}
-
-      {generatedKey && (
-        <div className="success-message">
-          <p><strong>API Key Generated!</strong></p>
-          <p>Copy this key now. It will not be shown again.</p>
-          <code className="generated-key">{generatedKey}</code>
-          <button 
-            className="btn-secondary" 
-            onClick={() => {
-              navigator.clipboard.writeText(generatedKey);
-              alert('Copied to clipboard!');
-            }}
-          >
-            📋 Copy
-          </button>
-          <button 
-            className="btn-secondary" 
-            onClick={() => setGeneratedKey('')}
-          >
-            Close
-          </button>
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>API keys</CardTitle>
+          <CardDescription>Use keys to integrate FuelTracker with other tools.</CardDescription>
         </div>
-      )}
+        <Button onClick={() => setShowForm(!showForm)}>{showForm ? 'Cancel' : 'Generate key'}</Button>
+      </CardHeader>
 
-      {showForm && !generatedKey && (
-        <form onSubmit={handleCreate} className="api-key-form">
-          <div className="form-group">
-            <label htmlFor="keyName">Key Name</label>
-            <input
-              id="keyName"
-              type="text"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="My Integration"
-              required
-            />
+      <CardContent className="space-y-4">
+        {error && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
           </div>
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Generating...' : 'Generate Key'}
-          </button>
-        </form>
-      )}
+        )}
 
-      {apiKeys.length === 0 ? (
-        <p>No API keys generated yet.</p>
-      ) : (
-        <table className="settings-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Created</th>
-              <th>Last Used</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {apiKeys.map(key => (
-              <tr key={key.id}>
-                <td>{key.name}</td>
-                <td>{new Date(key.createdAt).toLocaleDateString()}</td>
-                <td>{key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}</td>
-                <td>
-                  <button 
-                    onClick={() => handleRevoke(key.id)} 
-                    className="btn-danger btn-sm"
-                  >
-                    Revoke
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+        {generatedKey && (
+          <div className="space-y-2 rounded-lg border bg-muted/40 p-4 text-sm">
+            <p className="font-semibold">API key generated!</p>
+            <p className="text-muted-foreground">Copy this key now. It will not be shown again.</p>
+            <div className="rounded-md bg-background px-3 py-2 font-mono text-xs">{generatedKey}</div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedKey);
+                  alert('Copied to clipboard!');
+                }}
+              >
+                Copy
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setGeneratedKey('')}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {showForm && !generatedKey && (
+          <form onSubmit={handleCreate} className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="keyName">Key name</Label>
+              <Input
+                id="keyName"
+                type="text"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                placeholder="My integration"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              {loading ? 'Generating…' : 'Generate key'}
+            </Button>
+          </form>
+        )}
+
+        {apiKeys.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No API keys generated yet.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Last used</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apiKeys.map(key => (
+                <TableRow key={key.id}>
+                  <TableCell>{key.name}</TableCell>
+                  <TableCell>{new Date(key.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleRevoke(key.id)}
+                    >
+                      Revoke
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -396,34 +408,28 @@ function ExportSettings({ token }: { token: string | null }) {
   };
 
   return (
-    <div className="card">
-      <h2>Export Your Data</h2>
-      <p>Download all your fuel tracking data in JSON or CSV format.</p>
-
-      <div className="export-buttons">
-        <button 
-          className="btn-primary" 
-          onClick={handleExportJson}
-          disabled={loading}
-        >
-          {loading ? 'Exporting...' : '📥 Export as JSON'}
-        </button>
-        <button 
-          className="btn-primary" 
-          onClick={handleExportCsv}
-          disabled={loading}
-        >
-          {loading ? 'Exporting...' : '📥 Export as CSV'}
-        </button>
-      </div>
-
-      <div className="info-box">
-        <h3>Export Information:</h3>
-        <ul>
-          <li><strong>JSON:</strong> Complete data including all vehicles, entries, budgets, and relationships</li>
-          <li><strong>CSV:</strong> Simplified entry data suitable for spreadsheet analysis</li>
-        </ul>
-      </div>
-    </div>
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <CardTitle>Export your data</CardTitle>
+        <CardDescription>Download everything for backups or analysis.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={handleExportJson} disabled={loading}>
+            {loading ? 'Exporting…' : 'Export as JSON'}
+          </Button>
+          <Button variant="secondary" onClick={handleExportCsv} disabled={loading}>
+            {loading ? 'Exporting…' : 'Export as CSV'}
+          </Button>
+        </div>
+        <div className="space-y-2 rounded-lg border bg-muted/40 p-4 text-sm">
+          <p className="font-semibold">Export information</p>
+          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+            <li><span className="text-foreground">JSON:</span> Complete data including all vehicles, entries, budgets, and relationships.</li>
+            <li><span className="text-foreground">CSV:</span> Simplified entry data suitable for spreadsheet analysis.</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

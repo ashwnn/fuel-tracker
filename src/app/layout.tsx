@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -14,8 +15,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: "#3b82f6",
 };
+
+const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export default function RootLayout({
   children,
@@ -23,11 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="en" className={fontSans.variable} suppressHydrationWarning>
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

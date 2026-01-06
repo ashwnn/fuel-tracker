@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
 
 export default function NewVehiclePage() {
   return (
@@ -52,16 +56,22 @@ function VehicleForm() {
   };
 
   return (
-    <div className="form-page">
-      <div className="form-container">
-        <h1>Add New Vehicle</h1>
+    <Card className="shadow-sm">
+      <CardHeader>
+        <CardTitle>Add new vehicle</CardTitle>
+        <CardDescription>Keep your garage organized and separated.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name">Vehicle Name *</label>
-            <input
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Vehicle name</Label>
+            <Input
               id="name"
               type="text"
               value={formData.name}
@@ -71,31 +81,33 @@ function VehicleForm() {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="make">Make</label>
-            <input
-              id="make"
-              type="text"
-              value={formData.make}
-              onChange={(e) => setFormData({ ...formData, make: e.target.value })}
-              placeholder="Toyota"
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="make">Make</Label>
+              <Input
+                id="make"
+                type="text"
+                value={formData.make}
+                onChange={(e) => setFormData({ ...formData, make: e.target.value })}
+                placeholder="Toyota"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="model">Model</Label>
+              <Input
+                id="model"
+                type="text"
+                value={formData.model}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                placeholder="Camry"
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="model">Model</label>
-            <input
-              id="model"
-              type="text"
-              value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              placeholder="Camry"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="year">Year</label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="year">Year</Label>
+            <Input
               id="year"
               type="number"
               value={formData.year}
@@ -105,21 +117,16 @@ function VehicleForm() {
             />
           </div>
 
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Vehicle'}
-            </button>
-            <button 
-              type="button" 
-              className="btn-secondary" 
-              onClick={() => router.back()}
-              disabled={loading}
-            >
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating…' : 'Create vehicle'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => router.back()} disabled={loading}>
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

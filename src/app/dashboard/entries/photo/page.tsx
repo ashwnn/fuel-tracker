@@ -1,12 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
-import { Vehicle } from '@/types';
-import { formatNumber } from '@/lib/number';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { formatNumber } from "@/lib/number";
+import { Vehicle } from "@/types";
 
 export default function PhotoEntryPage() {
   return (
@@ -140,9 +146,12 @@ function PhotoForm() {
 
   if (vehicles.length === 0) {
     return (
-      <div className="empty-state">
-        <p>Please add a vehicle first.</p>
-      </div>
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>Add fill-up (photo)</CardTitle>
+          <CardDescription>Please add a vehicle first.</CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
@@ -153,25 +162,25 @@ function PhotoForm() {
   // Show pre-filled form if data is available
   if (prefilledData) {
     return (
-      <div className="form-page">
-        <div className="form-container">
-          <h1>Review Fill-Up Entry (AI Extracted)</h1>
-          <p className="form-description">
-            The AI has extracted information from your receipt. Please review and make any necessary corrections.
-          </p>
-
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>Review fill-up (AI extracted)</CardTitle>
+          <CardDescription>Confirm or tweak the details before saving.</CardDescription>
           {prefilledData.aiConfidence > 0 && (
-            <div className="info-message">
-              AI Confidence: {prefilledData.aiConfidence}%
+            <Badge variant="secondary">AI confidence: {prefilledData.aiConfidence}%</Badge>
+          )}
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
             </div>
           )}
 
-          {error && <div className="error-message">{error}</div>}
-
-          <form onSubmit={handleSubmitEntry}>
-            <div className="form-group">
-              <label htmlFor="vehicleId">Vehicle *</label>
-              <select
+          <form onSubmit={handleSubmitEntry} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="vehicleId">Vehicle</Label>
+              <Select
                 id="vehicleId"
                 value={selectedVehicleId}
                 onChange={(e) => setSelectedVehicleId(parseInt(e.target.value))}
@@ -183,13 +192,13 @@ function PhotoForm() {
                     {vehicle.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="entryDate">Date *</label>
-                <input
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="entryDate">Date</Label>
+                <Input
                   id="entryDate"
                   type="date"
                   value={formData.entryDate}
@@ -199,9 +208,9 @@ function PhotoForm() {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="odometerKm">Odometer (km) *</label>
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="odometerKm">Odometer (km)</Label>
+                <Input
                   id="odometerKm"
                   type="number"
                   step="0.1"
@@ -214,10 +223,10 @@ function PhotoForm() {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="fuelVolumeL">Volume (L) *</label>
-                <input
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="fuelVolumeL">Volume (L)</Label>
+                <Input
                   id="fuelVolumeL"
                   type="number"
                   step="0.01"
@@ -229,9 +238,9 @@ function PhotoForm() {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="totalCost">Total Cost *</label>
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="totalCost">Total cost</Label>
+                <Input
                   id="totalCost"
                   type="number"
                   step="0.01"
@@ -241,17 +250,14 @@ function PhotoForm() {
                   required
                   disabled={loading}
                 />
+                <p className="text-xs text-muted-foreground">Price per liter: ${pricePerLiter}</p>
               </div>
             </div>
 
-            <div className="calculation-display">
-              <strong>Price per Liter:</strong> ${pricePerLiter}
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="currency">Currency *</label>
-                <select
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select
                   id="currency"
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
@@ -262,12 +268,12 @@ function PhotoForm() {
                   <option value="EUR">EUR</option>
                   <option value="GBP">GBP</option>
                   <option value="CAD">CAD</option>
-                </select>
+                </Select>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="fuelType">Fuel Type *</label>
-                <select
+              <div className="space-y-2">
+                <Label htmlFor="fuelType">Fuel type</Label>
+                <Select
                   id="fuelType"
                   value={formData.fuelType}
                   onChange={(e) => setFormData({ ...formData, fuelType: e.target.value as any })}
@@ -277,17 +283,17 @@ function PhotoForm() {
                   <option value="GASOLINE">Gasoline</option>
                   <option value="DIESEL">Diesel</option>
                   <option value="ELECTRIC">Electric</option>
-                </select>
+                </Select>
               </div>
             </div>
 
-            <div className="form-actions">
-              <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Saving...' : 'Save Entry'}
-              </button>
-              <button 
-                type="button" 
-                className="btn-secondary" 
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Saving…' : 'Save entry'}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
                 onClick={() => {
                   setPrefilledData(null);
                   setSelectedFile(null);
@@ -305,89 +311,109 @@ function PhotoForm() {
                 }}
                 disabled={loading}
               >
-                Start Over
-              </button>
+                Start over
+              </Button>
             </div>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   // Show photo upload form
   return (
-    <div className="form-page">
-      <div className="form-container">
-        <h1>Add Fill-Up Entry (Photo)</h1>
-        <p className="form-description">
-          Upload a photo of your fuel receipt. Our AI will extract the information for you to review and confirm.
-        </p>
-
-        {error && <div className="error-message">{error}</div>}
-        {uploadStatus && <div className="info-message">{uploadStatus}</div>}
-
-        <form onSubmit={handleUploadPhoto}>
-          <div className="form-group">
-            <label htmlFor="vehicleId">Vehicle *</label>
-            <select
-              id="vehicleId"
-              value={selectedVehicleId}
-              onChange={(e) => setSelectedVehicleId(parseInt(e.target.value))}
-              required
-              disabled={loading}
-            >
-              {vehicles.map(vehicle => (
-                <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="photo">Receipt Photo *</label>
-            <input
-              id="photo"
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          {previewUrl && (
-            <div className="photo-preview">
-              <img src={previewUrl} alt="Receipt preview" />
+    <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>Add fill-up from photo</CardTitle>
+          <CardDescription>Upload your receipt and let the AI fill in the details.</CardDescription>
+          {uploadStatus && <Badge variant="secondary">{uploadStatus}</Badge>}
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
             </div>
           )}
 
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={loading || !selectedFile}>
-              {loading ? uploadStatus : '📸 Upload & Process'}
-            </button>
-            <button 
-              type="button" 
-              className="btn-secondary" 
-              onClick={() => router.back()}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+          <form onSubmit={handleUploadPhoto} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="vehicleId">Vehicle</Label>
+              <Select
+                id="vehicleId"
+                value={selectedVehicleId}
+                onChange={(e) => setSelectedVehicleId(parseInt(e.target.value))}
+                required
+                disabled={loading}
+              >
+                {vehicles.map(vehicle => (
+                  <option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-        <div className="info-box">
-          <h3>Tips for best results:</h3>
-          <ul>
-            <li>Ensure the receipt is well-lit and clearly visible</li>
-            <li>Include the entire receipt in the photo</li>
-            <li>Make sure text is readable and not blurry</li>
-            <li>The AI will extract: date, volume, cost, and price per liter</li>
-            <li>You will review and confirm all extracted data before saving</li>
-          </ul>
-        </div>
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="photo">Receipt photo</Label>
+              <Input
+                id="photo"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                required
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">Clear, well-lit photos work best.</p>
+            </div>
+
+            {previewUrl && (
+              <div className="overflow-hidden rounded-lg border bg-muted/30">
+                <img src={previewUrl} alt="Receipt preview" className="w-full object-contain" />
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={loading || !selectedFile}>
+                {loading ? uploadStatus || 'Processing…' : 'Upload & process'}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => router.back()}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>Tips for best results</CardTitle>
+          <CardDescription>Help the AI read your receipt cleanly.</CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground space-y-2">
+          <div className="flex items-start gap-2">
+            <span className="mt-1 text-base">💡</span>
+            <span>Use even lighting and avoid glare on the receipt.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="mt-1 text-base">🧾</span>
+            <span>Capture the full receipt with prices and totals visible.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="mt-1 text-base">🔍</span>
+            <span>Keep text sharp (no blur) and upright if possible.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="mt-1 text-base">🤖</span>
+            <span>The AI extracts date, volume, total, and price per liter. You’ll confirm everything before saving.</span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
