@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "FuelTracker - Track Your Fuel Expenses",
   description: "Multi-vehicle fuel tracking and budget management PWA",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
