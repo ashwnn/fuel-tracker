@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
-import { FillUpEntry, Vehicle } from '@/types';
-import { formatNumber } from '@/lib/number';
-import Link from 'next/link';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { formatNumber } from "@/lib/number";
+import { FillUpEntry, Vehicle } from "@/types";
 
 export default function EntriesPage() {
   return (
@@ -73,97 +78,103 @@ function EntriesContent() {
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading entries...</div>;
-  }
-
-  if (vehicles.length === 0) {
-    return (
-      <div className="empty-state">
-        <p>Please add a vehicle first.</p>
-        <Link href="/dashboard/vehicles/new" className="btn-primary">
-          Add Vehicle
-        </Link>
-      </div>
-    );
-  }
+  const emptyVehicles = vehicles.length === 0;
 
   return (
-    <div className="entries-page">
-      <div className="page-header">
-        <h1>Fill-Up Entries</h1>
-        <div className="header-actions">
-          <select
-            value={selectedVehicleId || ''}
-            onChange={(e) => setSelectedVehicleId(parseInt(e.target.value))}
-            className="vehicle-selector"
-          >
-            {vehicles.map(vehicle => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.name}
-              </option>
-            ))}
-          </select>
-          <Link href="/dashboard/entries/new" className="btn-primary">
-            ➕ Manual Entry
-          </Link>
-          <Link href="/dashboard/entries/photo" className="btn-primary">
-            📸 Photo Entry
-          </Link>
-        </div>
-      </div>
-
-      {entries.length === 0 ? (
-        <div className="empty-state">
-          <p>No entries yet for this vehicle.</p>
-        </div>
-      ) : (
-        <div className="entries-table-container">
-          <table className="entries-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Fuel Type</th>
-                <th>Volume</th>
-                <th>Cost</th>
-                <th>Odometer</th>
-                <th>Economy</th>
-                <th>Fill Level</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map(entry => (
-                <tr key={entry.id}>
-                  <td>{new Date(entry.entryDate).toLocaleDateString()}</td>
-                  <td>{entry.fuelType}</td>
-                  <td>{formatNumber(entry.fuelVolumeL, 2)} L</td>
-                  <td>{entry.currency} ${formatNumber(entry.totalCost, 2)}</td>
-                  <td>{formatNumber(entry.odometerKm, 0)} km</td>
-                  <td>
-                    {entry.economyLPer100Km 
-                      ? `${formatNumber(entry.economyLPer100Km, 2)} L/100km` 
-                      : '-'}
-                  </td>
-                  <td>
-                    <span className={`badge badge-${entry.fillLevel.toLowerCase()}`}>
-                      {entry.fillLevel}
-                    </span>
-                  </td>
-                  <td>
-                    <button 
-                      onClick={() => handleDelete(entry.id)} 
-                      className="btn-danger btn-sm"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle>Fill-up entries</CardTitle>
+            <CardDescription>Review, edit, or add the latest fuel logs.</CardDescription>
+          </div>
+          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <Select
+              value={selectedVehicleId || ''}
+              onChange={(e) => setSelectedVehicleId(parseInt(e.target.value))}
+              disabled={emptyVehicles}
+              className="sm:min-w-[200px]"
+            >
+              {vehicles.map(vehicle => (
+                <option key={vehicle.id} value={vehicle.id}>
+                  {vehicle.name}
+                </option>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </Select>
+            <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+              <Button asChild size="sm">
+                <Link href="/dashboard/entries/new">Manual entry</Link>
+              </Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/dashboard/entries/photo">Photo entry</Link>
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {loading ? (
+            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">Loading entries…</div>
+          ) : emptyVehicles ? (
+            <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
+              <p>Please add a vehicle first.</p>
+              <Button asChild size="sm">
+                <Link href="/dashboard/vehicles/new">Add vehicle</Link>
+              </Button>
+            </div>
+          ) : entries.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
+              No entries yet for this vehicle.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Fuel</TableHead>
+                  <TableHead>Volume</TableHead>
+                  <TableHead>Cost</TableHead>
+                  <TableHead>Odometer</TableHead>
+                  <TableHead>Economy</TableHead>
+                  <TableHead>Fill</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entries.map(entry => (
+                  <TableRow key={entry.id}>
+                    <TableCell>{new Date(entry.entryDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{entry.fuelType}</TableCell>
+                    <TableCell>{formatNumber(entry.fuelVolumeL, 2)} L</TableCell>
+                    <TableCell>{entry.currency} ${formatNumber(entry.totalCost, 2)}</TableCell>
+                    <TableCell>{formatNumber(entry.odometerKm, 0)} km</TableCell>
+                    <TableCell>
+                      {entry.economyLPer100Km
+                        ? `${formatNumber(entry.economyLPer100Km, 2)} L/100km`
+                        : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={entry.fillLevel === 'FULL' ? 'success' : 'warning'}>
+                        {entry.fillLevel}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(entry.id)}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
