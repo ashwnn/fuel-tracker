@@ -198,7 +198,24 @@ export const api = {
         vehicles: any[];
         budgetUsage: any;
         lastEntries: Record<number, any>;
-      }>('/api/dashboard', { token }),
+        fleetHealth?: {
+          fleetAvgMpg: number | null;
+          expectedAvgMpg: number | null;
+          healthScore: number | null;
+        };
+      }>('/api/dashboard', { token }).then((data) => {
+        return {
+          ...data,
+          vehicles: data.vehicles.map(normalizeVehicle),
+          fleetHealth: data.fleetHealth
+            ? {
+                fleetAvgMpg: data.fleetHealth.fleetAvgMpg != null ? Number(data.fleetHealth.fleetAvgMpg) : null,
+                expectedAvgMpg: data.fleetHealth.expectedAvgMpg != null ? Number(data.fleetHealth.expectedAvgMpg) : null,
+                healthScore: data.fleetHealth.healthScore != null ? Number(data.fleetHealth.healthScore) : null,
+              }
+            : undefined,
+        };
+      }),
   },
 
   // API Keys

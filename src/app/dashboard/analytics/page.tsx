@@ -91,6 +91,11 @@ function AnalyticsContent() {
     ? economyEntries.reduce((sum, e) => sum + (e.economyLPer100Km || 0), 0) / economyEntries.length
     : 0;
 
+  const mpgEntries = entries.filter(e => e.economyMpg);
+  const avgMpg = mpgEntries.length > 0
+    ? mpgEntries.reduce((sum, e) => sum + (e.economyMpg || 0), 0) / mpgEntries.length
+    : 0;
+
   // Group by month
   const monthlyData = entries.reduce((acc, entry) => {
     const date = new Date(entry.entryDate);
@@ -107,6 +112,36 @@ function AnalyticsContent() {
   const monthlyStats = Object.entries(monthlyData)
     .sort(([a], [b]) => b.localeCompare(a))
     .slice(0, 6);
+
+  const mpgTrend = mpgEntries
+    .slice()
+    .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
+    .slice(0, 10);
+
+  const selectedVehicleDetails = vehicles.find(v => v.id === selectedVehicleId);
+
+  const aiInsight = (() => {
+    if (!mpgEntries.length || !selectedVehicleDetails) return 'Not enough data yet for insights.';
+
+    const latest = mpgEntries[0];
+    const delta = mpgEntries.length > 1 ? (latest.economyMpg || 0) - (mpgEntries[mpgEntries.length - 1].economyMpg || 0) : 0;
+    const makeModel = [selectedVehicleDetails.make, selectedVehicleDetails.model].filter(Boolean).join(' ');
+    const transmission = selectedVehicleDetails.transmissionType || 'Unknown transmission';
+    const expected = selectedVehicleDetails.expectedMpg;
+
+    const issues: string[] = [];
+    if (expected && avgMpg && avgMpg < expected * 0.9) issues.push('fuel efficiency below expected spec (check tires, filters, driving style)');
+    if (delta < -1) issues.push('recent downward MPG trend (inspect tire pressure, alignment, or aggressive driving)');
+    if (transmission === 'AUTOMATIC') issues.push('ensure transmission fluid is serviced per schedule');
+    if (transmission === 'CVT') issues.push('watch for CVT slip; consider fluid change intervals');
+
+    const suggestions = issues.length
+      ? issues.join('; ')
+      : 'Efficiency is near expected; maintain regular service and moderate speeds.';
+
+    const label = makeModel || selectedVehicleDetails.name || 'vehicle';
+    return `For ${label} (${transmission}), avg MPG is ${formatNumber(avgMpg,1)}${expected ? ` vs expected ${formatNumber(expected,1)}` : ''}. ${suggestions}`;
+  })();
 
   return (
     <div className="space-y-4">
@@ -147,6 +182,7 @@ function AnalyticsContent() {
                   <Stat label="Total fuel" value={`${formatNumber(totalVolume, 1)} L`} />
                   <Stat label="Avg price/L" value={`$${formatNumber(avgPricePerLiter, 3)}`} />
                   {avgEconomy > 0 && <Stat label="Avg economy" value={`${formatNumber(avgEconomy, 2)} L/100km`} />}
+                  {avgMpg > 0 && <Stat label="Avg MPG" value={`${formatNumber(avgMpg, 1)} mpg`} />}
                 </CardContent>
               </Card>
 
@@ -191,6 +227,37 @@ function AnalyticsContent() {
                         <span className="font-semibold">{formatNumber(entry.economyLPer100Km, 2)} L/100km</span>
                       </div>
                     ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {mpgTrend.length > 0 && (
+                <Card className="border-border/70 shadow-sm md:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="text-base">MPG trend</CardTitle>
+                    <CardDescription>Last 10 MPG readings across fill-ups.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-2 md:grid-cols-2">
+                    {mpgTrend.map(entry => (
+                      <div key={entry.id} className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                        <span className="text-muted-foreground">{new Date(entry.entryDate).toLocaleDateString()}</span>
+                        <span className="font-semibold">{formatNumber(entry.economyMpg, 1)} mpg</span>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {mpgTrend.length > 0 && (
+                <Card className="border-border/70 shadow-sm md:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="text-base">AI efficiency insight</CardTitle>
+                    <CardDescription>Contextual note considering your vehicle and recent MPG.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
+                      {aiInsight}
+                    </div>
                   </CardContent>
                 </Card>
               )}

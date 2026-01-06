@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
@@ -98,6 +99,9 @@ function VehiclesContent() {
                         {vehicle.stats.avgEconomyLPer100Km && (
                           <StatRow label="Avg economy" value={`${formatNumber(vehicle.stats.avgEconomyLPer100Km, 2)} L/100km`} />
                         )}
+                        {vehicle.stats.avgEconomyMpg && (
+                          <StatRow label="Avg MPG" value={`${formatNumber(vehicle.stats.avgEconomyMpg, 1)} mpg`} />
+                        )}
                       </div>
                     ) : (
                       <p className="text-muted-foreground">No stats yet.</p>
@@ -105,6 +109,8 @@ function VehiclesContent() {
                     <div className="flex flex-wrap gap-2 pt-2 text-xs text-muted-foreground">
                       <Badge variant="outline">ID {vehicle.id}</Badge>
                       {vehicle.year && <Badge variant="outline">{vehicle.year}</Badge>}
+                      {vehicle.transmissionType && <Badge variant="outline">{vehicle.transmissionType}</Badge>}
+                      {vehicle.expectedMpg != null && <Badge variant="outline">Expected {formatNumber(vehicle.expectedMpg, 1)} mpg</Badge>}
                     </div>
                   </CardContent>
                   <CardFooter className="flex items-center gap-2">

@@ -28,6 +28,7 @@ function DashboardContent() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [budgetUsage, setBudgetUsage] = useState<BudgetUsage | null>(null);
   const [lastEntries, setLastEntries] = useState<Record<number, FillUpEntry>>({});
+  const [fleetHealth, setFleetHealth] = useState<{ fleetAvgMpg: number | null; expectedAvgMpg: number | null; healthScore: number | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ function DashboardContent() {
       setVehicles(data.vehicles);
       setBudgetUsage(data.budgetUsage);
       setLastEntries(data.lastEntries);
+      setFleetHealth(data.fleetHealth ?? null);
       
       // Set first vehicle as selected
       if (data.vehicles.length > 0) {
@@ -66,6 +68,11 @@ function DashboardContent() {
     if (!budgetUsage?.percentUsed) return 0;
     return Math.min(120, budgetUsage.percentUsed);
   }, [budgetUsage]);
+
+  const selectedVehicleMpg = useMemo(() => {
+    if (!selectedVehicle?.stats?.avgEconomyMpg) return null;
+    return selectedVehicle.stats.avgEconomyMpg;
+  }, [selectedVehicle]);
 
   if (loading) {
     return (
@@ -96,6 +103,32 @@ function DashboardContent() {
 
   return (
     <div className="space-y-6">
+      {fleetHealth && (
+        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-lg">Fuel health</CardTitle>
+              <CardDescription>Average MPG across your fleet vs rated expectations.</CardDescription>
+            </div>
+            {fleetHealth.healthScore != null && (
+              <Badge variant={fleetHealth.healthScore >= 100 ? 'secondary' : fleetHealth.healthScore >= 80 ? 'outline' : 'destructive'}>
+                Health {Math.round(fleetHealth.healthScore)}%
+              </Badge>
+            )}
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <StatBlock label="Fleet avg MPG" value={fleetHealth.fleetAvgMpg != null ? `${formatNumber(fleetHealth.fleetAvgMpg, 1)} mpg` : 'Not enough data'} />
+            <StatBlock label="Expected MPG" value={fleetHealth.expectedAvgMpg != null ? `${formatNumber(fleetHealth.expectedAvgMpg, 1)} mpg` : 'Set expected MPG'} />
+            <StatBlock
+              label="Gap"
+              value={fleetHealth.fleetAvgMpg != null && fleetHealth.expectedAvgMpg != null
+                ? `${formatNumber(fleetHealth.fleetAvgMpg - fleetHealth.expectedAvgMpg, 1)} mpg`
+                : '—'}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -193,6 +226,8 @@ function DashboardContent() {
                 <Badge variant="outline">{selectedVehicle.make || 'Vehicle'}</Badge>
                 {selectedVehicle.model && <Badge variant="outline">{selectedVehicle.model}</Badge>}
                 {selectedVehicle.year && <Badge variant="outline">{selectedVehicle.year}</Badge>}
+                {selectedVehicle.transmissionType && <Badge variant="outline">{selectedVehicle.transmissionType}</Badge>}
+                {selectedVehicle.expectedMpg != null && <Badge variant="outline">Expected {formatNumber(selectedVehicle.expectedMpg, 1)} mpg</Badge>}
               </div>
             </CardContent>
           ) : (
